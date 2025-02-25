@@ -44,7 +44,7 @@
                     </execution>
                 </executions>
                 <configuration>
-                    <goalPrefix>hello</goalPrefix>
+                    <goalPrefix>error-bucket</goalPrefix>
                     <skipErrorNoDescriptorsFound>true</skipErrorNoDescriptorsFound>
                 </configuration>
             </plugin>

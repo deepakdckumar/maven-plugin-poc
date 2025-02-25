@@ -11,7 +11,7 @@ import java.nio.file.*;
 import java.util.*;
 import java.util.regex.*;
 
-@Mojo(name = "hello", defaultPhase = LifecyclePhase.COMPILE)
+@Mojo(name = "check", defaultPhase = LifecyclePhase.COMPILE)
 public class ExceptionChecker extends AbstractMojo {
     private static List<String> validMessages = Arrays.asList(
             "Invalid Input",
@@ -24,16 +24,27 @@ public class ExceptionChecker extends AbstractMojo {
     public void execute() throws MojoExecutionException, MojoFailureException {
         System.out.println("Inside the execute method of the ExceptionChecker plugin");
         Path projectDir = Paths.get("src/main/java");
+
+        List<String> invalidMessages = new ArrayList<>();  // To collect invalid exception messages
+
         try {
             Files.walk(projectDir)
                     .filter(path -> path.toString().endsWith(".java")) // Only process Java files
-                    .forEach(filePath -> checkForExceptionsInFile(filePath));
+                    .forEach(filePath -> checkForExceptionsInFile(filePath, invalidMessages));
+
+            // If any invalid message found, fail the build
+            if (!invalidMessages.isEmpty()) {
+                String errorMessage = "Build failed due to invalid exception messages found:\n";
+                errorMessage += String.join("\n", invalidMessages);
+                throw new MojoFailureException(errorMessage);
+            }
+
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void checkForExceptionsInFile(Path filePath) {
+    private void checkForExceptionsInFile(Path filePath, List<String> invalidMessages) {
         System.out.println("Checking file: " + filePath);
         try (BufferedReader reader = Files.newBufferedReader(filePath)) {
             String line;
@@ -51,8 +62,10 @@ public class ExceptionChecker extends AbstractMojo {
                             System.out.println("Valid exception message found in file " + filePath);
                             System.out.println("Exception message: " + exceptionMessage);
                         } else {
+                            // Collect invalid exception messages
                             System.out.println("Invalid exception message found in file " + filePath);
                             System.out.println("Exception message: " + exceptionMessage);
+                            invalidMessages.add("File: " + filePath + " - Invalid message: " + exceptionMessage);
                         }
                     }
                 }
